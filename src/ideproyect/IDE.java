@@ -19,11 +19,8 @@ import javax.swing.text.StyleContext;
 public class IDE extends javax.swing.JFrame {
 
       NumeroLinea numerolinea;
-      //Directorio dir;
+      Directorio dir;
       
-      
-    
-    
     /**
      * Creates new form Editor
      */
@@ -152,15 +149,30 @@ public class IDE extends javax.swing.JFrame {
         jScrollPane2.setViewportView(jtaCompile);
 
         jMenu2.setText("Abrir");
+        jMenu2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jMenu2MouseClicked(evt);
+            }
+        });
         jMenuBar1.add(jMenu2);
 
         mnuevo.setText("Nuevo");
         jMenuBar1.add(mnuevo);
 
         mguardar.setText("Guardar");
+        mguardar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mguardarMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mguardar);
 
         mgcomo.setText("Guardar como");
+        mgcomo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mgcomoMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mgcomo);
 
         mimpr.setText("Imprimir");
@@ -216,13 +228,29 @@ public class IDE extends javax.swing.JFrame {
 // TODO add your handling code here:
     }//GEN-LAST:event_jtpCodeKeyReleased
 
+    private void mguardarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mguardarMouseClicked
+         dir.Guardar(this);       
+// TODO add your handling code here:
+    }//GEN-LAST:event_mguardarMouseClicked
+
+    private void mgcomoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mgcomoMouseClicked
+       dir.guardarC(this);
+        // TODO add your handling code here:
+    }//GEN-LAST:event_mgcomoMouseClicked
+
+    private void jMenu2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jMenu2MouseClicked
+        dir.Abrir(this);
+        clearAllComp();
+// TODO add your handling code here:
+    }//GEN-LAST:event_jMenu2MouseClicked
+
     /**
      * @param args the command line arguments
      */
     
     private void inicializar(){
         
-         //dir = new Directorio();
+         dir = new Directorio();
         
          setTitle("#HTML");
          String[] options = new String[]{"Guardar y continuar", "Descargar"};
@@ -277,7 +305,7 @@ public class IDE extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jtaCompile;
-    private javax.swing.JTextPane jtpCode;
+    public static javax.swing.JTextPane jtpCode;
     private javax.swing.JMenu mbuscar;
     private javax.swing.JMenu mgcomo;
     private javax.swing.JMenu mguardar;
