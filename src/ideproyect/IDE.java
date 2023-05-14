@@ -4,7 +4,13 @@
  */
 package ideproyect;
 
+import java.awt.Color;
 import javax.swing.JTextPane;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
 
 /**
  *
@@ -13,6 +19,9 @@ import javax.swing.JTextPane;
 public class IDE extends javax.swing.JFrame {
 
       NumeroLinea numerolinea;
+      //Directorio dir;
+      
+      
     
     
     /**
@@ -21,7 +30,89 @@ public class IDE extends javax.swing.JFrame {
     public IDE() {
         initComponents();
         inicializar();
+        colors();
     }
+    
+    //METODO PARA ENCONTRAR LAS ULTIMAS CADENAS
+    private int findLastNonWordChar(String text, int index) {
+        while (--index >= 0) {
+            //  \\W = [A-Za-Z0-9]
+            if (String.valueOf(text.charAt(index)).matches("[^a-zA-Z0-9<>]|>")) {
+                break;
+            }
+        }
+        return index;
+    }
+
+    //METODO PARA ENCONTRAR LAS PRIMERAS CADENAS 
+    private int findFirstNonWordChar(String text, int index) {
+        while (index < text.length()) {
+            if (String.valueOf(text.charAt(index)).matches("[^a-zA-Z0-9<>]|>")) {
+                break;
+            }
+            index++;
+        }
+        return index;
+    }
+
+    //METODO PARA PINTAS LAS PALABRAS RESEVADAS
+    private void colors() {
+
+        final StyleContext cont = StyleContext.getDefaultStyleContext();
+
+        //COLORES 
+        final AttributeSet attblue = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, Color.decode("#FF0000"));
+        final AttributeSet attblack = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground,Color.decode("#00000"));
+
+        //STYLO 
+        DefaultStyledDocument doc = new DefaultStyledDocument() {
+            public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+                super.insertString(offset, str, a);
+
+                String text = getText(0, getLength());
+                int before = findLastNonWordChar(text, offset);
+                if (before < 0) {
+                    before = 0;
+                }
+                int after = findFirstNonWordChar(text, offset + str.length());
+                int wordL = before;
+                int wordR = before;
+
+                while (wordR <= after) {
+                    if (wordR == after || String.valueOf(text.charAt(wordR)).matches("[^a-zA-Z0-9<>]|>")) {
+                       if (text.substring(wordL, wordR)
+                               .matches("(\\W)*(html|head|title|body|p|br|hr|a|img|ul|ol|li|dl|dt|dd|"
+                                       + "h[1-6]|div|span|form|input|button|label|select|option|textarea|"
+                                       + "table|tr|td|th|caption|style|script|<|>|/)(\\W)*")){
+                                setCharacterAttributes(wordL, wordR - wordL, attblue, false);
+                        } else {
+                            setCharacterAttributes(wordL, wordR - wordL, attblack, false);
+                        }
+                        wordL = wordR;
+
+                    }
+                    wordR++;
+                }
+            }
+
+            public void romeve(int offs, int len) throws BadLocationException {
+                super.remove(offs, len);
+
+                String text = getText(0, getLength());
+                int before = findLastNonWordChar(text, offs);
+                if (before < 0) {
+                    before = 0;
+                }
+            }
+        };
+
+        JTextPane txt = new JTextPane(doc);
+        String temp = jtpCode.getText();
+        jtpCode.setStyledDocument(txt.getStyledDocument());
+        jtpCode.setText(temp);
+
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -32,18 +123,12 @@ public class IDE extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jMenuBar2 = new javax.swing.JMenuBar();
-        jMenu8 = new javax.swing.JMenu();
-        jMenu9 = new javax.swing.JMenu();
-        jMenu10 = new javax.swing.JMenu();
         jScrollPane1 = new javax.swing.JScrollPane();
         jtpCode = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        jtaCompile = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
-        mabrir = new javax.swing.JMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
-        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
         mnuevo = new javax.swing.JMenu();
         mguardar = new javax.swing.JMenu();
         mgcomo = new javax.swing.JMenu();
@@ -52,40 +137,24 @@ public class IDE extends javax.swing.JFrame {
         mrempl = new javax.swing.JMenu();
         mir = new javax.swing.JMenu();
 
-        jMenu8.setText("File");
-        jMenuBar2.add(jMenu8);
-
-        jMenu9.setText("Edit");
-        jMenuBar2.add(jMenu9);
-
-        jMenu10.setText("jMenu10");
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jScrollPane1.setViewportView(jtpCode);
-
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane2.setViewportView(jTextArea1);
-
-        mabrir.setText("File");
-
-        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        jMenuItem1.setText("Abrir");
-        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
+        jtpCode.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jtpCode.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                jtpCodeKeyReleased(evt);
             }
         });
-        mabrir.add(jMenuItem1);
+        jScrollPane1.setViewportView(jtpCode);
 
-        jMenuItem2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
-        jMenuItem2.setText("Guardar");
-        mabrir.add(jMenuItem2);
+        jtaCompile.setColumns(20);
+        jtaCompile.setRows(5);
+        jScrollPane2.setViewportView(jtaCompile);
 
-        jMenuBar1.add(mabrir);
+        jMenu2.setText("Abrir");
+        jMenuBar1.add(jMenu2);
 
-        mnuevo.setText("Edit");
+        mnuevo.setText("Nuevo");
         jMenuBar1.add(mnuevo);
 
         mguardar.setText("Guardar");
@@ -125,24 +194,38 @@ public class IDE extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+    private void jtpCodeKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jtpCodeKeyReleased
+        int keyCode = evt.getKeyCode();
+        if ((keyCode >= 65 && keyCode <= 90) || (keyCode >= 48 && keyCode <= 57)
+                || (keyCode >= 97 && keyCode <= 122) || (keyCode != 27 && !(keyCode >= 37
+                && keyCode <= 40) && !(keyCode >= 16
+                && keyCode <= 18) && keyCode != 524
+                && keyCode != 20)) {
+
+            if (!getTitle().contains("*")) {
+                setTitle(getTitle() + "*");
+            }
+        }        
+// TODO add your handling code here:
+    }//GEN-LAST:event_jtpCodeKeyReleased
 
     /**
      * @param args the command line arguments
      */
     
     private void inicializar(){
+        
+         //dir = new Directorio();
+        
          setTitle("#HTML");
-        // String[] options = new String[]{"Guardar y continuar", "Descargar"};
+         String[] options = new String[]{"Guardar y continuar", "Descargar"};
          
          //Numero de Linea
          numerolinea = new NumeroLinea(jtpCode);
@@ -150,10 +233,7 @@ public class IDE extends javax.swing.JFrame {
           
     } 
     
-    
-    
-    
-    
+   
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -186,20 +266,18 @@ public class IDE extends javax.swing.JFrame {
             }
         });
     }
+    
+    public void clearAllComp() {
+        jtaCompile.setText("");
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenu jMenu10;
-    private javax.swing.JMenu jMenu8;
-    private javax.swing.JMenu jMenu9;
+    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuBar jMenuBar2;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JTextArea jtaCompile;
     private javax.swing.JTextPane jtpCode;
-    private javax.swing.JMenu mabrir;
     private javax.swing.JMenu mbuscar;
     private javax.swing.JMenu mgcomo;
     private javax.swing.JMenu mguardar;
