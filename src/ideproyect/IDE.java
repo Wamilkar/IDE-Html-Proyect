@@ -157,6 +157,11 @@ public class IDE extends javax.swing.JFrame {
         jMenuBar1.add(jMenu2);
 
         mnuevo.setText("Nuevo");
+        mnuevo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mnuevoMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mnuevo);
 
         mguardar.setText("Guardar");
@@ -243,6 +248,11 @@ public class IDE extends javax.swing.JFrame {
         clearAllComp();
 // TODO add your handling code here:
     }//GEN-LAST:event_jMenu2MouseClicked
+
+    private void mnuevoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuevoMouseClicked
+        dir.Nuevo(this);
+    // TODO add your handling code here:
+    }//GEN-LAST:event_mnuevoMouseClicked
 
     /**
      * @param args the command line arguments
