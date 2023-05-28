@@ -11,6 +11,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -190,6 +191,11 @@ public class IDE extends javax.swing.JFrame {
         jMenuBar1.add(mrempl);
 
         mir.setText("Ir a");
+        mir.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mirMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mir);
 
         setJMenuBar(jMenuBar1);
@@ -253,6 +259,39 @@ public class IDE extends javax.swing.JFrame {
         dir.Nuevo(this);
     // TODO add your handling code here:
     }//GEN-LAST:event_mnuevoMouseClicked
+
+    private void mirMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mirMouseClicked
+    // Mostrar el cuadro de diálogo de entrada de número de línea
+    String input = JOptionPane.showInputDialog(this, "Ingrese el número de línea:");
+
+    if (input != null && !input.isEmpty()) {
+        try {
+            // Obtener el número de línea ingresado
+            int lineNumber = Integer.parseInt(input);
+
+            // Obtener el componente de texto del JScrollPane
+            JTextPane textPane = (JTextPane) jScrollPane1.getViewport().getView();
+            int lineCount = textPane.getDocument().getDefaultRootElement().getElementCount();
+
+            if (lineNumber >= 1 && lineNumber <= lineCount) {
+                // Obtener la posición de inicio y fin de la línea
+                int startOffset = textPane.getDocument().getDefaultRootElement()
+                        .getElement(lineNumber - 1).getStartOffset();
+                int endOffset = textPane.getDocument().getDefaultRootElement()
+                        .getElement(lineNumber - 1).getEndOffset();
+
+                // Desplazarse a la línea deseada
+                textPane.setCaretPosition(startOffset);
+                textPane.moveCaretPosition(endOffset);
+            } else {
+                JOptionPane.showMessageDialog(this, "Número de línea inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Número de línea inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }    // TODO add your handling code here:
+    }//GEN-LAST:event_mirMouseClicked
 
     /**
      * @param args the command line arguments
