@@ -5,6 +5,16 @@
 package ideproyect;
 
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import static java.awt.print.Printable.NO_SUCH_PAGE;
+import static java.awt.print.Printable.PAGE_EXISTS;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -20,6 +30,8 @@ public class IDE extends javax.swing.JFrame {
 
       NumeroLinea numerolinea;
       Directorio dir;
+      IMPRIMIR imprimir1;
+      
       
     /**
      * Creates new form Editor
@@ -110,6 +122,24 @@ public class IDE extends javax.swing.JFrame {
 
     }
 
+    
+    public static void print(JTextPane textPane) {
+        // Obtener el PrinterJob
+        PrinterJob printerJob = PrinterJob.getPrinterJob();
+        
+        // Establecer el contenido a imprimir
+        printerJob.setPrintable(textPane.getPrintable(null, null));
+        
+        // Mostrar el diálogo de impresión
+        if (printerJob.printDialog()) {
+            try {
+                // Imprimir el contenido
+                printerJob.print();
+            } catch (PrinterException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -137,6 +167,7 @@ public class IDE extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jtpCode.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jtpCode.setName("jtpCode"); // NOI18N
         jtpCode.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 jtpCodeKeyReleased(evt);
@@ -181,6 +212,11 @@ public class IDE extends javax.swing.JFrame {
         jMenuBar1.add(mgcomo);
 
         mimpr.setText("Imprimir");
+        mimpr.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mimprMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mimpr);
 
         mbuscar.setText("Buscar");
@@ -254,10 +290,16 @@ public class IDE extends javax.swing.JFrame {
     // TODO add your handling code here:
     }//GEN-LAST:event_mnuevoMouseClicked
 
+    private void mimprMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mimprMouseClicked
+
+     print(jtpCode);
+    }//GEN-LAST:event_mimprMouseClicked
+
+   
     /**
      * @param args the command line arguments
      */
-    
+   
     private void inicializar(){
         
          dir = new Directorio();
@@ -303,6 +345,8 @@ public class IDE extends javax.swing.JFrame {
                 new IDE().setVisible(true);
             }
         });
+            /* Create and display the form */
+        
     }
     
     public void clearAllComp() {
@@ -325,4 +369,14 @@ public class IDE extends javax.swing.JFrame {
     private javax.swing.JMenu mrempl;
     // End of variables declaration//GEN-END:variables
 
+    public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
+        if (pageIndex == 0) {
+            Graphics2D graphics2d = (Graphics2D) graphics;
+            graphics2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+            printAll(graphics2d);
+            return PAGE_EXISTS;
+        } else {
+            return NO_SUCH_PAGE;
+        } 
+    }
 }
