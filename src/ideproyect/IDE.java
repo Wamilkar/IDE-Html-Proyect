@@ -21,6 +21,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -30,7 +31,7 @@ public class IDE extends javax.swing.JFrame {
 
       NumeroLinea numerolinea;
       Directorio dir;
-      IMPRIMIR imprimir1;
+      
       
       
     /**
@@ -150,19 +151,23 @@ public class IDE extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenuItem1 = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         jtpCode = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         jtaCompile = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu2 = new javax.swing.JMenu();
+        jMenu1 = new javax.swing.JMenu();
         mnuevo = new javax.swing.JMenu();
+        jMenu2 = new javax.swing.JMenu();
         mguardar = new javax.swing.JMenu();
         mgcomo = new javax.swing.JMenu();
         mimpr = new javax.swing.JMenu();
         mbuscar = new javax.swing.JMenu();
         mrempl = new javax.swing.JMenu();
         mir = new javax.swing.JMenu();
+
+        jMenuItem1.setText("jMenuItem1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -179,13 +184,7 @@ public class IDE extends javax.swing.JFrame {
         jtaCompile.setRows(5);
         jScrollPane2.setViewportView(jtaCompile);
 
-        jMenu2.setText("Abrir");
-        jMenu2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jMenu2MouseClicked(evt);
-            }
-        });
-        jMenuBar1.add(jMenu2);
+        jMenu1.setText("ARCHIVO");
 
         mnuevo.setText("Nuevo");
         mnuevo.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -193,7 +192,15 @@ public class IDE extends javax.swing.JFrame {
                 mnuevoMouseClicked(evt);
             }
         });
-        jMenuBar1.add(mnuevo);
+        jMenu1.add(mnuevo);
+
+        jMenu2.setText("Abrir");
+        jMenu2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jMenu2MouseClicked(evt);
+            }
+        });
+        jMenu1.add(jMenu2);
 
         mguardar.setText("Guardar");
         mguardar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -201,7 +208,7 @@ public class IDE extends javax.swing.JFrame {
                 mguardarMouseClicked(evt);
             }
         });
-        jMenuBar1.add(mguardar);
+        jMenu1.add(mguardar);
 
         mgcomo.setText("Guardar como");
         mgcomo.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -209,7 +216,7 @@ public class IDE extends javax.swing.JFrame {
                 mgcomoMouseClicked(evt);
             }
         });
-        jMenuBar1.add(mgcomo);
+        jMenu1.add(mgcomo);
 
         mimpr.setText("Imprimir");
         mimpr.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -217,7 +224,9 @@ public class IDE extends javax.swing.JFrame {
                 mimprMouseClicked(evt);
             }
         });
-        jMenuBar1.add(mimpr);
+        jMenu1.add(mimpr);
+
+        jMenuBar1.add(jMenu1);
 
         mbuscar.setText("Buscar");
         jMenuBar1.add(mbuscar);
@@ -226,6 +235,11 @@ public class IDE extends javax.swing.JFrame {
         jMenuBar1.add(mrempl);
 
         mir.setText("Ir a");
+        mir.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mirMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mir);
 
         setJMenuBar(jMenuBar1);
@@ -290,12 +304,47 @@ public class IDE extends javax.swing.JFrame {
     // TODO add your handling code here:
     }//GEN-LAST:event_mnuevoMouseClicked
 
+
     private void mimprMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mimprMouseClicked
 
      print(jtpCode);
     }//GEN-LAST:event_mimprMouseClicked
 
-   
+
+    private void mirMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mirMouseClicked
+    // Mostrar el cuadro de diálogo de entrada de número de línea
+    String input = JOptionPane.showInputDialog(this, "Ingrese el número de línea:");
+
+    if (input != null && !input.isEmpty()) {
+        try {
+            // Obtener el número de línea ingresado
+            int lineNumber = Integer.parseInt(input);
+
+            // Obtener el componente de texto del JScrollPane
+            JTextPane textPane = (JTextPane) jScrollPane1.getViewport().getView();
+            int lineCount = textPane.getDocument().getDefaultRootElement().getElementCount();
+
+            if (lineNumber >= 1 && lineNumber <= lineCount) {
+                // Obtener la posición de inicio y fin de la línea
+                int startOffset = textPane.getDocument().getDefaultRootElement()
+                        .getElement(lineNumber - 1).getStartOffset();
+                int endOffset = textPane.getDocument().getDefaultRootElement()
+                        .getElement(lineNumber - 1).getEndOffset();
+
+                // Desplazarse a la línea deseada
+                textPane.setCaretPosition(startOffset);
+                textPane.moveCaretPosition(endOffset);
+            } else {
+                JOptionPane.showMessageDialog(this, "Número de línea inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Número de línea inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }    // TODO add your handling code here:
+    }//GEN-LAST:event_mirMouseClicked
+
+
     /**
      * @param args the command line arguments
      */
@@ -354,8 +403,10 @@ public class IDE extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jtaCompile;
