@@ -7,6 +7,8 @@ package ideproyect;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import static java.awt.print.Printable.NO_SUCH_PAGE;
@@ -14,6 +16,8 @@ import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
@@ -22,6 +26,11 @@ import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.JTextComponent;
 
 /**
  *
@@ -141,6 +150,92 @@ public class IDE extends javax.swing.JFrame {
             }
         }
     }
+    
+     //BUSCAR
+public static void searchWordInTextPane(JTextPane textPane) {
+        JFrame frame = new JFrame("Buscar palabra");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(300, 100);
+
+        JPanel panel = new JPanel();
+        JTextField searchField = new JTextField(20);
+        JButton searchButton = new JButton("Buscar");
+
+        searchButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String searchText = searchField.getText();
+                if (searchText.length() > 0) {
+                    searchWordInTextComponent(textPane, searchText);
+                }
+            }
+        });
+
+        panel.add(searchField);
+        panel.add(searchButton);
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+private static void searchWordInTextComponent(JTextComponent textComponent, String searchText) {
+        Highlighter highlighter = textComponent.getHighlighter();
+        highlighter.removeAllHighlights();
+
+        try {
+            String text = textComponent.getDocument().getText(0, textComponent.getDocument().getLength());
+            int index = text.indexOf(searchText);
+            while (index >= 0) {
+                int endIndex = index + searchText.length();
+                highlighter.addHighlight(index, endIndex, DefaultHighlighter.DefaultPainter);
+                index = text.indexOf(searchText, endIndex);
+            }
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+//BUSCAR Y REEMPLAZAR
+    public static void searchAndReplaceWordInTextPane(JTextPane textPane) {
+        JFrame frame = new JFrame("Buscar y reemplazar palabra");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(300, 150);
+
+        JPanel panel = new JPanel();
+        JTextField searchField = new JTextField(20);
+        JTextField replaceField = new JTextField(20);
+        JButton searchButton = new JButton("Buscar");
+        JButton replaceButton = new JButton("Reemplazar");
+
+        searchButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String searchText = searchField.getText();
+                if (searchText.length() > 0) {
+                    searchWordInTextComponent(textPane, searchText);
+                }
+            }
+        });
+
+         replaceButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String searchText = searchField.getText();
+                String replaceText = replaceField.getText();
+                if (searchText.length() > 0 && replaceText.length() > 0) {
+                    replaceWordInTextComponent(textPane, searchText, replaceText);
+                }
+            }
+        });
+
+        panel.add(searchField);
+        panel.add(searchButton);
+        panel.add(replaceField);
+        panel.add(replaceButton);
+        frame.add(panel);
+        frame.setVisible(true);
+    }
+    
+     private static void replaceWordInTextComponent(JTextComponent textComponent, String searchText, String replaceText) {
+        String text = textComponent.getText();
+        text = text.replace(searchText, replaceText);
+        textComponent.setText(text);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -229,9 +324,19 @@ public class IDE extends javax.swing.JFrame {
         jMenuBar1.add(jMenu1);
 
         mbuscar.setText("Buscar");
+        mbuscar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mbuscarMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mbuscar);
 
         mrempl.setText("Remplazar");
+        mrempl.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                mremplMouseClicked(evt);
+            }
+        });
         jMenuBar1.add(mrempl);
 
         mir.setText("Ir a");
@@ -343,6 +448,16 @@ public class IDE extends javax.swing.JFrame {
         }
     }    // TODO add your handling code here:
     }//GEN-LAST:event_mirMouseClicked
+
+    private void mbuscarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mbuscarMouseClicked
+        // TODO add your handling code here:
+        IDE.searchWordInTextPane(jtpCode);
+    }//GEN-LAST:event_mbuscarMouseClicked
+
+    private void mremplMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mremplMouseClicked
+        // TODO add your handling code here:
+        IDE.searchAndReplaceWordInTextPane(jtpCode);
+    }//GEN-LAST:event_mremplMouseClicked
 
 
     /**
