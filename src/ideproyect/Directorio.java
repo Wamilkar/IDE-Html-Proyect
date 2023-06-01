@@ -24,7 +24,7 @@ public class Directorio {
     String[] options = new String[]{"Guardar y continuar", "Descartar"};
     
     
-    public String getTextFile(File file){
+    public String getTextFile(File file){        
         String text = "";
         try {
             

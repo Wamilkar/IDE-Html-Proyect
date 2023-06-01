@@ -5,6 +5,8 @@
 package ideproyect;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -15,7 +17,11 @@ import static java.awt.print.Printable.NO_SUCH_PAGE;
 import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -28,10 +34,17 @@ import javax.swing.text.StyleContext;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
 
+//importaciones de Jsoup
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 /**
  *
  * @author Sistemas
@@ -50,7 +63,27 @@ public class IDE extends javax.swing.JFrame {
         initComponents();
         inicializar();
         colors();
+
+        //ARBOL DOM//
+        jtpCode.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateTree();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateTree();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateTree();
+            }
+        });
     }
+    
+    //<<====================================================================>>//
     
     //METODO PARA ENCONTRAR LAS ULTIMAS CADENAS
     private int findLastNonWordChar(String text, int index) {
@@ -100,7 +133,7 @@ public class IDE extends javax.swing.JFrame {
                 while (wordR <= after) {
                     if (wordR == after || String.valueOf(text.charAt(wordR)).matches("[^a-zA-Z0-9<>]|>")) {
                        if (text.substring(wordL, wordR)
-                               .matches("(\\W)*(html|head|title|body|p|br|hr|a|img|ul|ol|li|dl|dt|dd|"
+                               .matches("(\\W)*(html|head|title|body|tbody|p|br|hr|a|img|ul|ol|li|dl|dt|dd|"
                                        + "h[1-6]|div|span|form|input|button|label|select|option|textarea|"
                                        + "table|tr|td|th|caption|style|script|<|>|/)(\\W)*")){
                                 setCharacterAttributes(wordL, wordR - wordL, attblue, false);
@@ -136,10 +169,10 @@ public class IDE extends javax.swing.JFrame {
     public static void print(JTextPane textPane) {
         // Obtener el PrinterJob
         PrinterJob printerJob = PrinterJob.getPrinterJob();
-        
+
         // Establecer el contenido a imprimir
         printerJob.setPrintable(textPane.getPrintable(null, null));
-        
+
         // Mostrar el diálogo de impresión
         if (printerJob.printDialog()) {
             try {
@@ -150,9 +183,9 @@ public class IDE extends javax.swing.JFrame {
             }
         }
     }
-    
-     //BUSCAR
-public static void searchWordInTextPane(JTextPane textPane) {
+
+    //BUSCAR
+    public static void searchWordInTextPane(JTextPane textPane) {
         JFrame frame = new JFrame("Buscar palabra");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(300, 100);
@@ -175,7 +208,8 @@ public static void searchWordInTextPane(JTextPane textPane) {
         frame.add(panel);
         frame.setVisible(true);
     }
-private static void searchWordInTextComponent(JTextComponent textComponent, String searchText) {
+
+    private static void searchWordInTextComponent(JTextComponent textComponent, String searchText) {
         Highlighter highlighter = textComponent.getHighlighter();
         highlighter.removeAllHighlights();
 
@@ -213,7 +247,7 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
             }
         });
 
-         replaceButton.addActionListener(new ActionListener() {
+        replaceButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String searchText = searchField.getText();
                 String replaceText = replaceField.getText();
@@ -230,13 +264,92 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
         frame.add(panel);
         frame.setVisible(true);
     }
-    
-     private static void replaceWordInTextComponent(JTextComponent textComponent, String searchText, String replaceText) {
+
+    private static void replaceWordInTextComponent(JTextComponent textComponent, String searchText, String replaceText) {
         String text = textComponent.getText();
         text = text.replace(searchText, replaceText);
         textComponent.setText(text);
     }
+    
+    
+ //<<=======================================================================>>//   
+    //ARBOL DOM//
+    
+    private void updateTree() {
+        String html = jtpCode.getText();
+        try {
+            Document doc = Jsoup.parse(html);
+            Element body = doc.body();
 
+            String dotGraph = buildDotGraph(body);
+            File imageFile = generateGraphImage(dotGraph);
+
+            ImageIcon imageIcon = new ImageIcon(imageFile.getAbsolutePath()) {
+                @Override
+                public void paintIcon(Component c, Graphics g, int x, int y) {
+                    // Obtener el tamaño del JLabel
+                    Dimension size = jLabel1.getSize();
+                    // Obtener el tamaño de la imagen
+                    Dimension imageSize = new Dimension(getIconWidth(), getIconHeight());
+                    // Calcular las coordenadas para centrar la imagen
+                    int centerX = (size.width - imageSize.width) / 2;
+                    int centerY = (size.height - imageSize.height) / 2;
+                    // Dibujar la imagen centrada
+                    super.paintIcon(c, g, centerX, centerY);
+                }
+            };
+
+            jLabel1.setIcon(imageIcon);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String buildDotGraph(Element element) {
+        StringBuilder dotGraph = new StringBuilder();
+        dotGraph.append("digraph HTML_DOM {\n");
+        buildDotGraphRecursive(dotGraph, element);
+        dotGraph.append("}\n");
+        return dotGraph.toString();
+    }
+
+    private void buildDotGraphRecursive(StringBuilder dotGraph, Element element) {
+        String nodeId = "node_" + element.hashCode();
+        dotGraph.append("  ").append(nodeId).append(" [label=\"").append(element.tagName()).append("\"];\n");
+
+        Elements children = element.children();
+        for (Element child : children) {
+            String childNodeId = "node_" + child.hashCode();
+            dotGraph.append("  ").append(childNodeId).append(" [label=\"").append(child.tagName()).append("\"];\n");
+            dotGraph.append("  ").append(nodeId).append(" -> ").append(childNodeId).append(";\n");
+
+            buildDotGraphRecursive(dotGraph, child);
+        }
+    }
+
+    private File generateGraphImage(String dotGraph) throws IOException {
+        File dotFile = File.createTempFile("html_dom_tree", ".dot");
+        try (FileWriter fileWriter = new FileWriter(dotFile)) {
+            fileWriter.write(dotGraph);
+        }
+
+        File imageFile = File.createTempFile("html_dom_tree", ".png");
+
+        ProcessBuilder processBuilder = new ProcessBuilder("dot", "-Tpng", "-o" + imageFile.getAbsolutePath(), dotFile.getAbsolutePath());
+        Process process = processBuilder.start();
+        try {
+            process.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return imageFile;
+    }
+      
+    //<<==========================================================================>>// 
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -251,6 +364,8 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
         jtpCode = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         jtaCompile = new javax.swing.JTextArea();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         mnuevo = new javax.swing.JMenu();
@@ -278,6 +393,9 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
         jtaCompile.setColumns(20);
         jtaCompile.setRows(5);
         jScrollPane2.setViewportView(jtaCompile);
+
+        jLabel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jScrollPane3.setViewportView(jLabel1);
 
         jMenu1.setText("ARCHIVO");
 
@@ -353,18 +471,23 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1348, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 900, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
                 .addContainerGap())
@@ -518,12 +641,14 @@ private static void searchWordInTextComponent(JTextComponent textComponent, Stri
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTextArea jtaCompile;
     public static javax.swing.JTextPane jtpCode;
     private javax.swing.JMenu mbuscar;
