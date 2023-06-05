@@ -17,9 +17,12 @@ import static java.awt.print.Printable.NO_SUCH_PAGE;
 import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -33,6 +36,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -44,7 +48,13 @@ import javax.swing.text.JTextComponent;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
+
+//importaciones de tidy
+import org.w3c.tidy.Tidy;
+
+
 /**
  *
  * @author Sistemas
@@ -63,7 +73,7 @@ public class IDE extends javax.swing.JFrame {
         initComponents();
         inicializar();
         colors();
-
+        
         //ARBOL DOM//
         jtpCode.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -277,6 +287,7 @@ public class IDE extends javax.swing.JFrame {
     
     private void updateTree() {
         String html = jtpCode.getText();
+        checkHtmlSyntax(html,jtaCompile);// Llama a la función isValidHTML
         try {
             Document doc = Jsoup.parse(html);
             Element body = doc.body();
@@ -315,16 +326,24 @@ public class IDE extends javax.swing.JFrame {
     }
 
     private void buildDotGraphRecursive(StringBuilder dotGraph, Element element) {
-        String nodeId = "node_" + element.hashCode();
-        dotGraph.append("  ").append(nodeId).append(" [label=\"").append(element.tagName()).append("\"];\n");
+        if (!element.tagName().equalsIgnoreCase("body")) {
+            String nodeId = "node_" + element.hashCode();
+            dotGraph.append("  ").append(nodeId).append(" [label=\"").append(element.tagName()).append("\"];\n");
 
-        Elements children = element.children();
-        for (Element child : children) {
-            String childNodeId = "node_" + child.hashCode();
-            dotGraph.append("  ").append(childNodeId).append(" [label=\"").append(child.tagName()).append("\"];\n");
-            dotGraph.append("  ").append(nodeId).append(" -> ").append(childNodeId).append(";\n");
+            Elements children = element.children();
+            for (Element child : children) {
+                String childNodeId = "node_" + child.hashCode();
+                dotGraph.append("  ").append(childNodeId).append(" [label=\"").append(child.tagName()).append("\"];\n");
+                dotGraph.append("  ").append(nodeId).append(" -> ").append(childNodeId).append(";\n");
 
-            buildDotGraphRecursive(dotGraph, child);
+                buildDotGraphRecursive(dotGraph, child);
+            }
+        } else {
+            // Process the children of the <body> element directly
+            Elements children = element.children();
+            for (Element child : children) {
+                buildDotGraphRecursive(dotGraph, child);
+            }
         }
     }
 
@@ -349,7 +368,32 @@ public class IDE extends javax.swing.JFrame {
       
     //<<==========================================================================>>// 
     
-    
+   //Errores
+  private boolean checkHtmlSyntax(String html, JTextArea jtaCompile) {
+    try {
+        Tidy tidy = new Tidy();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        tidy.setErrout(new PrintWriter(output, true)); // Redirigir mensajes de error a ByteArrayOutputStream
+        tidy.setOnlyErrors(true); // Solo mostrar errores, no advertencias ni información
+        tidy.setShowWarnings(false); // No mostrar advertencias
+        tidy.setQuiet(true); // Ejecución en modo silencioso, sin mensajes de salida
+
+        tidy.parse(new ByteArrayInputStream(html.getBytes()), output); // No necesitamos un OutputStream para la salida
+        
+        String cleanedHtml = output.toString();
+        
+        if (!cleanedHtml.isEmpty()) {
+            jtaCompile.setText(cleanedHtml); // Reemplazar el contenido del JTextArea con los mensajes de error
+        } else {
+            jtaCompile.setText(""); // Limpiar el JTextArea si no se encontraron errores
+        }
+        
+        return true; // Si no se produce ninguna excepción, el HTML es válido
+    } catch (Exception e) {
+        return false; // Si se produce una excepción, el HTML contiene errores
+    }
+}
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -471,14 +515,14 @@ public class IDE extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 900, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -517,24 +561,25 @@ public class IDE extends javax.swing.JFrame {
     }//GEN-LAST:event_mguardarMouseClicked
 
     private void mgcomoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mgcomoMouseClicked
-       dir.guardarC(this);
+         dir.guardarC(this);
         // TODO add your handling code here:
     }//GEN-LAST:event_mgcomoMouseClicked
 
     private void jMenu2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jMenu2MouseClicked
-        dir.Abrir(this);
-        clearAllComp();
+         dir.Abrir(this);
+         clearAllComp();        
 // TODO add your handling code here:
     }//GEN-LAST:event_jMenu2MouseClicked
 
     private void mnuevoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuevoMouseClicked
-        dir.Nuevo(this);
+         jtaCompile.setText("");
+         dir.Nuevo(this);
+         clearAllComp();
     // TODO add your handling code here:
     }//GEN-LAST:event_mnuevoMouseClicked
 
 
     private void mimprMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mimprMouseClicked
-
      print(jtpCode);
     }//GEN-LAST:event_mimprMouseClicked
 
@@ -639,7 +684,7 @@ public class IDE extends javax.swing.JFrame {
     public void clearAllComp() {
         jtaCompile.setText("");
     }
-
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JMenu jMenu1;
